@@ -42,16 +42,27 @@ services:
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-supersecretjwtrefreshkeyfornitmessengerapi}
       - MEDIA_STORAGE_PATH=/app/uploads
       - MAX_UPLOAD_BYTES=${MAX_UPLOAD_BYTES:-2147483648}
-      - TURN_SERVER_ADDR=${TURN_SERVER_ADDR:-}
-      - TURN_USERNAME=${TURN_USERNAME:-}
-      - TURN_PASSWORD=${TURN_PASSWORD:-}
+      - LIVEKIT_URL=${LIVEKIT_URL:-http://localhost:7880}
+      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY:-devkey}
+      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET:-secret}
       - PROXY_KEY=${PROXY_KEY:-supersecretproxyauthorizationtoken}
     volumes:
       - media_data:/app/uploads
     ports:
       - "8080:8080"
 
-  # 3. Web Administration Console SPA (Nginx)
+  # 3. LiveKit Server
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: nit-livekit
+    restart: unless-stopped
+    command: '--dev --keys="${LIVEKIT_API_KEY:-devkey}: ${LIVEKIT_API_SECRET:-secret}"'
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+      - "7882:7882/udp"
+
+  # 4. Web Administration Console SPA (Nginx)
   web-admin:
     build:
       context: https://github.com/nit-messenger/web-admin.git
@@ -61,7 +72,7 @@ services:
     ports:
       - "8082:80"
 
-  # 4. Web Chat Client SPA (Nginx)
+  # 5. Web Chat Client SPA (Nginx)
   web-client:
     build:
       context: https://github.com/nit-messenger/web-client.git
