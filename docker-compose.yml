@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL Database Service
+  db:
+    image: postgres:16-alpine
+    container_name: nit-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-nit}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-nitpass}
+      POSTGRES_DB: ${DB_NAME:-nit}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-nit} -d ${DB_NAME:-nit}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Go Fiber Backend Service
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: nit-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - SERVER_PORT=8080
+      - SERVER_DOMAIN=${SERVER_DOMAIN:-localhost}
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-nit}
+      - DB_PASSWORD=${DB_PASSWORD:-nitpass}
+      - DB_NAME=${DB_NAME:-nit}
+      - JWT_SECRET=${JWT_SECRET:-supersecretjwtkeyfornitmessengerapi}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-supersecretjwtrefreshkeyfornitmessengerapi}
+      - MEDIA_STORAGE_PATH=/app/uploads
+      - MAX_UPLOAD_BYTES=${MAX_UPLOAD_BYTES:-2147483648}
+      - TURN_SERVER_ADDR=${TURN_SERVER_ADDR:-}
+      - TURN_USERNAME=${TURN_USERNAME:-}
+      - TURN_PASSWORD=${TURN_PASSWORD:-}
+      - PROXY_KEY=${PROXY_KEY:-supersecretproxyauthorizationtoken}
+    volumes:
+      - media_data:/app/uploads
+    ports:
+      - "8080:8080"
+
+  # 3. Reverse Proxy Node Service
+  proxy-node:
+    build:
+      context: ../proxy-node
+      dockerfile: Dockerfile
+    container_name: nit-proxy-node
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      - PORT=${PROXY_PORT:-8081}
+      - PROXY_KEY=${PROXY_KEY:-supersecretproxyauthorizationtoken}
+    ports:
+      - "8081:8081"
+
+  # 4. Web Administration Console SPA (Nginx)
+  web-admin:
+    build:
+      context: ../web-admin
+      dockerfile: Dockerfile
+    container_name: nit-web-admin
+    restart: unless-stopped
+    ports:
+      - "8082:80"
+
+  # 5. Web Chat Client SPA (Nginx)
+  web-client:
+    build:
+      context: ../web-client
+      dockerfile: Dockerfile
+    container_name: nit-web-client
+    restart: unless-stopped
+    ports:
+      - "8083:80"
+
+volumes:
+  postgres_data:
+    driver: local
+  media_data:
+    driver: local
