@@ -1,12 +1,11 @@
 # Nit Family Messenger Quick Start
 
-Get the entire Nit Family Messenger stack running locally in seconds using Docker Compose.
+Get the Nit Family Messenger stack running locally using Docker Compose.
 
 ## 🚀 Services Included
 
 *   **Database (port 5432):** PostgreSQL instance storing user settings, logs, and message models.
 *   **Backend (port 8080):** Go API & WebSocket router providing core media calling, push triggers, and federation relay logic.
-*   **Proxy Node (port 8081):** A zero-dependency Go Reverse Proxy node relaying traffic to the backend target.
 *   **Web Admin (port 8082):** Vite Dark-themed administration SPA to manage backend configurations.
 *   **Web Client (port 8083):** Vite Dark-themed family chat application.
 
@@ -21,13 +20,19 @@ cp .env.example .env
 ```
 *(Optionally review and update the variables inside `.env` to secure secrets/passwords).*
 
-### 2. Run the Stack
-Start all services in detached mode:
+### 2. Run the Main Stack
+Start the primary database, backend, admin, and chat services:
 ```bash
 docker compose up -d --build
 ```
 
-### 3. Setup and Access
+### 3. Run the Standalone Proxy (Hosted Separately)
+To spin up the backup reverse proxy server on a separate node/server:
+```bash
+docker compose -f docker-compose.proxy.yml up -d --build
+```
+
+### 4. Setup and Access
 Once containers are healthy, open your web browser to:
 1.  **Server Setup & Admin:** Visit [http://localhost:8082](http://localhost:8082)
     *   Initialize the Server Address (`http://localhost:8080`).

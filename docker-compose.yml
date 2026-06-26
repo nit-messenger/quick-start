@@ -15,7 +15,7 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-nit} -d ${DB_NAME:-nit}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-nit} -d ${DB_NAME:-nit}" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -23,7 +23,7 @@ services:
   # 2. Go Fiber Backend Service
   backend:
     build:
-      context: ../backend
+      context: https://github.com/nit-messenger/backend.git
       dockerfile: Dockerfile
     container_name: nit-backend
     restart: unless-stopped
@@ -51,35 +51,20 @@ services:
     ports:
       - "8080:8080"
 
-  # 3. Reverse Proxy Node Service
-  proxy-node:
-    build:
-      context: ../proxy-node
-      dockerfile: Dockerfile
-    container_name: nit-proxy-node
-    restart: unless-stopped
-    depends_on:
-      - backend
-    environment:
-      - PORT=${PROXY_PORT:-8081}
-      - PROXY_KEY=${PROXY_KEY:-supersecretproxyauthorizationtoken}
-    ports:
-      - "8081:8081"
-
-  # 4. Web Administration Console SPA (Nginx)
+  # 3. Web Administration Console SPA (Nginx)
   web-admin:
     build:
-      context: ../web-admin
+      context: https://github.com/nit-messenger/web-admin.git
       dockerfile: Dockerfile
     container_name: nit-web-admin
     restart: unless-stopped
     ports:
       - "8082:80"
 
-  # 5. Web Chat Client SPA (Nginx)
+  # 4. Web Chat Client SPA (Nginx)
   web-client:
     build:
-      context: ../web-client
+      context: https://github.com/nit-messenger/web-client.git
       dockerfile: Dockerfile
     container_name: nit-web-client
     restart: unless-stopped

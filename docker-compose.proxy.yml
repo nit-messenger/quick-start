@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  # Standalone Reverse Proxy Node Service
+  proxy-node:
+    build:
+      context: https://github.com/nit-messenger/proxy-node.git
+      dockerfile: Dockerfile
+    container_name: nit-proxy-node
+    restart: unless-stopped
+    environment:
+      - PORT=${PROXY_PORT:-8081}
+      - PROXY_KEY=${PROXY_KEY:-supersecretproxyauthorizationtoken}
+    ports:
+      - "8081:8081"
